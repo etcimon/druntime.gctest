@@ -1,0 +1,3 @@
+[submodule "druntime"]
+	path = druntime
+	url = https://github.com/etcimon/druntime
