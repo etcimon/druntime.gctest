@@ -31,16 +31,17 @@ Report[] linearAddDel(int[] dataSz, int times = 100_000){
 			total.stop();
 			report.msecs = report.sw.peek().msecs;
 			report.descr ~= report.msecs.to!string ~ "]";
-			reports ~= report;
+			if (del) reports[i].msecs += report.msecs;
+			else 
+				reports ~= report;
 		}
-		gcMem = null;
 	}
 	return reports;
 }
 
 Report[] manualAddDel(int[] dataSz, int times = 100_000){
 
-	char[][] gcMem;
+	string[] gcMem;
 	Report[] reports;
 	foreach (del; [false, true]){
 		foreach (i; 0..dataSz.length){
@@ -51,30 +52,90 @@ Report[] manualAddDel(int[] dataSz, int times = 100_000){
 			
 			if (!del)
 				foreach (j; 0..times)
-					gcMem ~= allocArray!(char, true)(defaultAllocator(), dataSz[i]);
+					gcMem ~= cast(string)manualAllocator().alloc(dataSz[i]);
 
 			else
 				foreach (j; 0..times)
-					freeArray!(char, true)(defaultAllocator(), gcMem[i]);
+					manualAllocator().free(cast(void[])gcMem[i]);
 
 			report.sw.stop();
 			total.stop();
 			report.msecs = report.sw.peek().msecs;
 			report.descr ~= report.msecs.to!string ~ "]";
-			reports ~= report;
+			if (del) reports[i].msecs += report.msecs;
+			else 
+				reports ~= report;
 		}
 	}
 	gcMem = null;
 	return reports;
 }
 
+Report[] mixedManualAddDel(int[] dataSz, int times = 100_000){
+	
+	string[] gcMem;
+	Report[] reports;
+	foreach (i; 0..dataSz.length){
+			
+
+		Report report;
+		report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
+		total.start();
+		report.sw.start();
+		foreach (j; 0..times){
+			gcMem ~= cast(string)manualAllocator().alloc(dataSz[i]);
+			manualAllocator().free(cast(void[])gcMem[i]);
+		}
+		report.sw.stop();
+		total.stop();
+		report.msecs = report.sw.peek().msecs;
+		report.descr ~= report.msecs.to!string ~ "]";
+		reports ~= report;
+
+
+	}
+
+	gcMem = null;
+	return reports;
+}
+
+Report[] mixedLinearAddDel(int[] dataSz, int times = 100_000){
+	
+	string[] gcMem;
+	Report[] reports;
+	foreach (i; 0..dataSz.length){
+		
+		
+		Report report;
+		report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
+		total.start();
+		report.sw.start();
+		foreach (j; 0..times){
+			gcMem ~= new string(dataSz[i]);
+			delete gcMem[i];
+		}
+		report.sw.stop();
+		total.stop();
+		report.msecs = report.sw.peek().msecs;
+		report.descr ~= report.msecs.to!string ~ "]";
+		reports ~= report;
+		
+		
+	}
+	
+	gcMem = null;
+	return reports;
+}
+
 void main(){
 
-	int[] dataSz = [10, 20, 40, 100];
+	int[] dataSz = [10, 20, 40, 100, 400, 1000, 10_000];
 	int times = 100_000;
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
-	reportCollections ~= manualAddDel(dataSz, times);
-	reportCollections ~= linearAddDel(dataSz, times);
+	reportCollections ~= mixedManualAddDel(dataSz, times);
+	reportCollections ~= mixedManualAddDel(dataSz, times);
+	reportCollections ~= mixedLinearAddDel(dataSz, times);
+	reportCollections ~= mixedLinearAddDel(dataSz, times);
 
 	string[] diffDescr;
 	int i;
