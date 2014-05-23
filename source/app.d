@@ -129,14 +129,23 @@ Report[] mixedLinearAddDel(int[] dataSz, int times = 100_000){
 
 void main(){
 
-	int[] dataSz = [10, 20, 40, 100, 400, 1000, 10_000];
+	int[] dataSz = [10, 20, 40, 100, 400, 1000, 5_000];
 	int times = 100_000;
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
-	reportCollections ~= mixedManualAddDel(dataSz, times);
-	reportCollections ~= mixedManualAddDel(dataSz, times);
-	reportCollections ~= mixedLinearAddDel(dataSz, times);
-	reportCollections ~= mixedLinearAddDel(dataSz, times);
 
+	version(ManualMemory){
+		reportCollections ~= manualAddDel(dataSz, times);
+		reportCollections ~= manualAddDel(dataSz, times);
+		reportCollections ~= mixedManualAddDel(dataSz, times);
+		reportCollections ~= mixedManualAddDel(dataSz, times);
+
+	}else {
+
+		reportCollections ~= linearAddDel(dataSz, times);
+		reportCollections ~= linearAddDel(dataSz, times);
+		reportCollections ~= mixedLinearAddDel(dataSz, times);
+		reportCollections ~= mixedLinearAddDel(dataSz, times);
+	}
 	string[] diffDescr;
 	int i;
 	foreach (bytes; dataSz){
