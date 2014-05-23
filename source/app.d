@@ -25,7 +25,7 @@ Report[] linearAddDel(int[] dataSz, int times = 100_000){
 			
 			else
 				foreach (j; 0..times)
-					delete gcMem[i];
+					gcMem[i] = null;
 			
 			report.sw.stop();
 			total.stop();
@@ -114,7 +114,7 @@ Report[] mixedLinearAddDel(int[] dataSz, int times = 100_000){
 		report.sw.start();
 		foreach (j; 0..times){
 			gcMem ~= new string(dataSz[i]);
-			delete gcMem[i];
+			 gcMem[i] = null;
 		}
 		report.sw.stop();
 		total.stop();
@@ -161,7 +161,7 @@ Report[] mixedManualArrays(int[] dataSz, int times = 100_000){
 
 void main(){
 
-	int[] dataSz = [10, 20, 40, 100, 400, 1000, 5_000];
+	int[] dataSz = [10, 20, 40, 100, 500, 1000, 5000];
 	int times = 100_000;
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
 
@@ -172,11 +172,10 @@ void main(){
 		reportCollections ~= mixedManualArrays(dataSz, times);
 
 	}else {
-
 		reportCollections ~= linearAddDel(dataSz, times);
 		reportCollections ~= linearAddDel(dataSz, times);
-		reportCollections ~= mixedLinearAddDel(dataSz, times);
-		reportCollections ~= mixedLinearAddDel(dataSz, times);
+		reportCollections ~= linearAddDel(dataSz, times);
+		reportCollections ~= linearAddDel(dataSz, times);
 	}
 	string[] diffDescr;
 	int i;
@@ -206,6 +205,7 @@ void main(){
 	writeln(stats.freed, " freed");
 	writeln(stats.used, " used");
 	writeln(stats.collections, " collections");
+	writeln(size_t.max, " max size_t");
 	writeln((stats.freed.to!float/stats.used.to!float)*100f, " avg freed % per collection");
 }
 
