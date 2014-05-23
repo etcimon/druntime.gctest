@@ -2,8 +2,10 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Default" />
   <MonoDevelop.Ide.Workbench ActiveDocument="dub.json">
     <Files>
-      <File FileName="source\app.d" Line="8" Column="16" />
-      <File FileName="dub.json" Line="2" Column="15" />
+      <File FileName="source\app.d" Line="58" Column="46" />
+      <File FileName="dub.json" Line="10" Column="15" />
+      <File FileName="C:\Users\Etienne Cimon\AppData\Roaming\dub\packages\vibe-d-0.7.15\source\vibe\utils\memory.d" Line="15" Column="25" />
+      <File FileName="source\memory.d" Line="60" Column="16" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

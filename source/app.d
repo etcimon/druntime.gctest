@@ -4,13 +4,13 @@ import std.stdio;
 import std.datetime;
 import std.typecons;
 import std.conv;
-
-string[] gcMem;
+import vibe.utils.memory;
 StopWatch total;
 
 alias Report = Tuple!(string, "descr", StopWatch, "sw", long, "msecs");
 Report[] linearAddDel(int[] dataSz, int times = 100_000){
 
+	string[] gcMem;
 	Report[] reports;
 	foreach (del; [false, true]){
 		foreach (i; 0..dataSz.length){
@@ -33,17 +33,48 @@ Report[] linearAddDel(int[] dataSz, int times = 100_000){
 			report.descr ~= report.msecs.to!string ~ "]";
 			reports ~= report;
 		}
+		gcMem = null;
 	}
+	return reports;
+}
+
+Report[] manualAddDel(int[] dataSz, int times = 100_000){
+
+	char[][] gcMem;
+	Report[] reports;
+	foreach (del; [false, true]){
+		foreach (i; 0..dataSz.length){
+			Report report;
+			report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
+			total.start();
+			report.sw.start();
+			
+			if (!del)
+				foreach (j; 0..times)
+					gcMem ~= allocArray!(char, true)(defaultAllocator(), dataSz[i]);
+
+			else
+				foreach (j; 0..times)
+					freeArray!(char, true)(defaultAllocator(), gcMem[i]);
+
+			report.sw.stop();
+			total.stop();
+			report.msecs = report.sw.peek().msecs;
+			report.descr ~= report.msecs.to!string ~ "]";
+			reports ~= report;
+		}
+	}
+	gcMem = null;
 	return reports;
 }
 
 void main(){
 
-	int[] dataSz = [10, 20, 40, 100, 200, 400, 1000, 10_000, 20_000];
+	int[] dataSz = [10, 20, 40, 100];
 	int times = 100_000;
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
-	foreach (i; 0..4)
-		reportCollections ~= linearAddDel(dataSz, times);
+	reportCollections ~= manualAddDel(dataSz, times);
+	reportCollections ~= linearAddDel(dataSz, times);
 
 	string[] diffDescr;
 	int i;

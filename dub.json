@@ -6,5 +6,6 @@
 	"targetType": "executable",
 	"authors": ["Etienne"],
 	"dependencies": {
-	}
+	},
+	"versions": []
 }
