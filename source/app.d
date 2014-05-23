@@ -76,8 +76,8 @@ Report[] mixedManualAddDel(int[] dataSz, int times = 100_000){
 	string[] gcMem;
 	Report[] reports;
 	foreach (i; 0..dataSz.length){
-			
-
+		
+		
 		Report report;
 		report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
 		total.start();
@@ -91,13 +91,15 @@ Report[] mixedManualAddDel(int[] dataSz, int times = 100_000){
 		report.msecs = report.sw.peek().msecs;
 		report.descr ~= report.msecs.to!string ~ "]";
 		reports ~= report;
-
-
+		
+		
 	}
-
+	
 	gcMem = null;
 	return reports;
 }
+
+
 
 Report[] mixedLinearAddDel(int[] dataSz, int times = 100_000){
 	
@@ -127,6 +129,36 @@ Report[] mixedLinearAddDel(int[] dataSz, int times = 100_000){
 	return reports;
 }
 
+Report[] mixedManualArrays(int[] dataSz, int times = 100_000){
+	
+	string[] gcMem;
+	Report[] reports;
+	foreach (i; 0..dataSz.length){
+		
+		
+		Report report;
+		report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
+		total.start();
+		report.sw.start();
+		foreach (j; 0..times){
+			gcMem ~= allocArray!(immutable(char), false)(manualAllocator(), dataSz[i]);
+			freeArray!(immutable(char), false)(manualAllocator(), gcMem[i]);
+		}
+		report.sw.stop();
+		total.stop();
+		report.msecs = report.sw.peek().msecs;
+		report.descr ~= report.msecs.to!string ~ "]";
+		reports ~= report;
+		
+		
+	}
+	
+	gcMem = null;
+	return reports;
+}
+
+
+
 void main(){
 
 	int[] dataSz = [10, 20, 40, 100, 400, 1000, 5_000];
@@ -136,8 +168,8 @@ void main(){
 	version(ManualMemory){
 		reportCollections ~= manualAddDel(dataSz, times);
 		reportCollections ~= manualAddDel(dataSz, times);
-		reportCollections ~= mixedManualAddDel(dataSz, times);
-		reportCollections ~= mixedManualAddDel(dataSz, times);
+		reportCollections ~= mixedManualArrays(dataSz, times);
+		reportCollections ~= mixedManualArrays(dataSz, times);
 
 	}else {
 
@@ -168,6 +200,13 @@ void main(){
 	foreach (descr; diffDescr)
 		writeln(descr);
 	writeln("Total test took: " ~ total.peek().msecs.to!string ~ " ms");
+
+	import core.memory;
+	GCStats stats = GC.stats();
+	writeln(stats.freed, " freed");
+	writeln(stats.used, " used");
+	writeln(stats.collections, " collections");
+	writeln((stats.freed.to!float/stats.used.to!float)*100f, " avg freed % per collection");
 }
 
 import std.math;
