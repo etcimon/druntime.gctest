@@ -5,6 +5,7 @@ import std.datetime;
 import std.typecons;
 import std.conv;
 import vibe.utils.memory;
+import core.memory;
 StopWatch total;
 
 alias Report = Tuple!(string, "descr", StopWatch, "sw", long, "msecs");
@@ -160,7 +161,7 @@ Report[] mixedManualArrays(int[] dataSz, int times = 100_000){
 
 
 void main(){
-
+	GC.stats(); // start stats
 	int[] dataSz = [10, 20, 40, 100, 500, 1000, 5000];
 	int times = 100_000;
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
@@ -200,7 +201,6 @@ void main(){
 		writeln(descr);
 	writeln("Total test took: " ~ total.peek().msecs.to!string ~ " ms");
 
-	import core.memory;
 	GCStats stats = GC.stats();
 	writeln(stats.freed, " freed");
 	writeln(stats.used, " used");
