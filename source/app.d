@@ -161,9 +161,9 @@ Report[] mixedManualArrays(int[] dataSz, int times = 100_000){
 
 
 void main(){
-	GC.stats(); // start stats
-	int[] dataSz = [10, 20, 40, 100, 500, 1000, 5000];
-	int times = 100_000;
+	cast(void)GC.stats(); // start stats
+	int[] dataSz = [10000, 20000, 30000];
+	int times = 10_000;
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
 
 	version(ManualMemory){
@@ -175,8 +175,8 @@ void main(){
 	}else {
 		reportCollections ~= linearAddDel(dataSz, times);
 		reportCollections ~= linearAddDel(dataSz, times);
-		reportCollections ~= linearAddDel(dataSz, times);
-		reportCollections ~= linearAddDel(dataSz, times);
+		reportCollections ~= mixedLinearAddDel(dataSz, times);
+		reportCollections ~= mixedLinearAddDel(dataSz, times);
 	}
 	string[] diffDescr;
 	int i;
