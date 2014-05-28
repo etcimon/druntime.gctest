@@ -1,12 +1,12 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="dub.json">
+  <MonoDevelop.Ide.Workbench ActiveDocument="source\app.d">
     <Files>
-      <File FileName="source\app.d" Line="212" Column="17" />
-      <File FileName="dub.json" Line="10" Column="15" />
-      <File FileName="source\memory.d" Line="20" Column="1" />
+      <File FileName="source\app.d" Line="179" Column="57" />
+      <File FileName="dub.json" Line="1" Column="1" />
       <File FileName="..\..\installdir\dmd2\src\druntime\import\core\memory.d" Line="1" Column="1" />
-      <File FileName="..\..\installdir\dmd2\src\druntime\src\core\memory.d" Line="575" Column="6" />
+      <File FileName="..\..\installdir\dmd2\src\druntime\src\core\memory.d" Line="1" Column="1" />
+      <File FileName="..\..\installdir\dmd2\src\druntime\src\gc\gc.d" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
