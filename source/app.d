@@ -162,8 +162,8 @@ Report[] mixedManualArrays(int[] dataSz, int times = 100_000){
 
 void main(){
 	GCStats* stats = new GCStats();
-	stats.samplingMaxDiscrepancy = 9;
-	stats.disableSampling = false; 
+	stats.samplingMaxDiscrepancy = 8;
+	stats.disableSampling = true; 
 	GC.stats(stats);
 	GC.stats(stats); 
 	int[] dataSz = [10, 20, 30, 50, 100, 300, 600]; 
