@@ -77,8 +77,6 @@ Report[] mixedManualAddDel(int[] dataSz, int times = 100_000){
 	string[] gcMem;
 	Report[] reports;
 	foreach (i; 0..dataSz.length){
-		
-		
 		Report report;
 		report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
 		total.start();
@@ -92,8 +90,7 @@ Report[] mixedManualAddDel(int[] dataSz, int times = 100_000){
 		report.msecs = report.sw.peek().msecs;
 		report.descr ~= report.msecs.to!string ~ "]";
 		reports ~= report;
-		
-		
+
 	}
 	
 	gcMem = null;
@@ -161,12 +158,12 @@ Report[] mixedManualArrays(int[] dataSz, int times = 100_000){
 
 
 void main(){
-	GCStats* stats = new GCStats();
+	GCStats stats = GCStats();
 	stats.samplingMaxDiscrepancy = 8;
-	stats.disableSampling = true; 
-	GC.stats(stats);
-	GC.stats(stats); 
-	int[] dataSz = [10, 20, 30, 50, 100, 300, 600]; 
+	stats.disableSampling = false; 
+	GC.stats(&stats);
+	GC.stats(&stats); 
+	int[] dataSz = [10, 20]; 
 	int times = 100_000; 
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
 	version(ManualMemory){ 
@@ -203,7 +200,7 @@ void main(){
 		writeln(descr);
 	writeln("Total test took: " ~ total.peek().msecs.to!string ~ " ms");
 
-	GC.stats(stats);
+	GC.stats(&stats);
 	writeln(stats.samplingSamples, " samples");
 	writeln(stats.samplingPopulation, " population");
 	writeln(stats.totalSamplingFailures, " total sampling failures");
@@ -219,7 +216,7 @@ void main(){
 	writeln(stats.bytesFreedToOS, "B Freed to OS");
 	writeln(stats.totalFreeToOS, " total Freed to OS");  
 	writeln(stats.totalCollections, " collections");
-	writeln(1543154/2123);
+
 	writeln((stats.bytesFreedInCollections.to!float/stats.bytesUsedInCollections.to!float)*100f, " avg freed % per collection");
 }
 
