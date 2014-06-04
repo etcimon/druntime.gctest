@@ -4,11 +4,12 @@ import std.stdio;
 import std.datetime;
 import std.typecons;
 import std.conv;
-import vibe.utils.memory;
 import core.memory;
 StopWatch total;
 
 alias Report = Tuple!(string, "descr", StopWatch, "sw", long, "msecs");
+
+size_t totalSize;
 Report[] linearAddDel(int[] dataSz, int times = 100_000){
 
 	string[] gcMem;
@@ -20,14 +21,20 @@ Report[] linearAddDel(int[] dataSz, int times = 100_000){
 			total.start();
 			report.sw.start();
 			
-			if (!del)
-				foreach (j; 0..times)
+			if (!del){
+				foreach (j; 0..times){
 					gcMem ~= new string(dataSz[i]);
-			
-			else
+					totalSize += dataSz[i];
+					if (totalSize > 100_000_000)
+					{
+						GC.collect();
+						totalSize = 0;
+					}
+				}
+			}else{
 				foreach (j; 0..times)
 					gcMem[i] = null;
-			
+			}
 			report.sw.stop();
 			total.stop();
 			report.msecs = report.sw.peek().msecs;
@@ -39,64 +46,6 @@ Report[] linearAddDel(int[] dataSz, int times = 100_000){
 	}
 	return reports;
 }
-
-Report[] manualAddDel(int[] dataSz, int times = 100_000){
-
-	string[] gcMem;
-	Report[] reports;
-	foreach (del; [false, true]){
-		foreach (i; 0..dataSz.length){
-			Report report;
-			report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
-			total.start();
-			report.sw.start();
-			
-			if (!del)
-				foreach (j; 0..times)
-					gcMem ~= cast(string)manualAllocator().alloc(dataSz[i]);
-
-			else
-				foreach (j; 0..times)
-					manualAllocator().free(cast(void[])gcMem[i]);
-
-			report.sw.stop();
-			total.stop();
-			report.msecs = report.sw.peek().msecs;
-			report.descr ~= report.msecs.to!string ~ "]";
-			if (del) reports[i].msecs += report.msecs;
-			else 
-				reports ~= report;
-		}
-	}
-	gcMem = null;
-	return reports;
-}
-
-Report[] mixedManualAddDel(int[] dataSz, int times = 100_000){
-	
-	string[] gcMem;
-	Report[] reports;
-	foreach (i; 0..dataSz.length){
-		Report report;
-		report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
-		total.start();
-		report.sw.start();
-		foreach (j; 0..times){
-			gcMem ~= cast(string)manualAllocator().alloc(dataSz[i]);
-			manualAllocator().free(cast(void[])gcMem[i]);
-		}
-		report.sw.stop();
-		total.stop();
-		report.msecs = report.sw.peek().msecs;
-		report.descr ~= report.msecs.to!string ~ "]";
-		reports ~= report;
-
-	}
-	
-	gcMem = null;
-	return reports;
-}
-
 
 
 Report[] mixedLinearAddDel(int[] dataSz, int times = 100_000){
@@ -127,44 +76,16 @@ Report[] mixedLinearAddDel(int[] dataSz, int times = 100_000){
 	return reports;
 }
 
-Report[] mixedManualArrays(int[] dataSz, int times = 100_000){
-	
-	string[] gcMem;
-	Report[] reports;
-	foreach (i; 0..dataSz.length){
-		
-		
-		Report report;
-		report.descr = "[" ~ dataSz[i].to!string ~ "B; " ~ times.to!string ~ ";";
-		total.start();
-		report.sw.start();
-		foreach (j; 0..times){
-			gcMem ~= allocArray!(immutable(char), false)(manualAllocator(), dataSz[i]);
-			freeArray!(immutable(char), false)(manualAllocator(), gcMem[i]);
-		}
-		report.sw.stop();
-		total.stop();
-		report.msecs = report.sw.peek().msecs;
-		report.descr ~= report.msecs.to!string ~ "]";
-		reports ~= report;
-		
-		
-	}
-	
-	gcMem = null;
-	return reports;
-}
-
 
 
 void main(){
-	GCStats stats = GCStats();
-	stats.samplingMaxDiscrepancy = 8;
-	stats.disableSampling = false; 
-	GC.stats(&stats);
-	GC.stats(&stats); 
-	int[] dataSz = [10, 20]; 
-	int times = 100_000; 
+	GCStats* stats = new GCStats();
+	//stats.samplingMaxDiscrepancy = 8;
+	//stats.disableSampling = false; 
+	GC.stats(stats);
+	GC.stats(stats); 
+	int[] dataSz = [20, 50, 100, 500, 1000, 5000]; 
+	int times = 10_000; 
 	Report[][] reportCollections; // [ [ addReport, delReport ] , ... ]
 	version(ManualMemory){ 
 		reportCollections ~= manualAddDel(dataSz, times); 
@@ -174,6 +95,10 @@ void main(){
 	}else { 
 		reportCollections ~= linearAddDel(dataSz, times); 
 		reportCollections ~= linearAddDel(dataSz, times);
+		reportCollections ~= linearAddDel(dataSz, times);
+		reportCollections ~= linearAddDel(dataSz, times); 
+		reportCollections ~= linearAddDel(dataSz, times);
+		reportCollections ~= linearAddDel(dataSz, times); 
 		reportCollections ~= linearAddDel(dataSz, times);
 		reportCollections ~= linearAddDel(dataSz, times); 
 	} 
@@ -200,23 +125,25 @@ void main(){
 		writeln(descr);
 	writeln("Total test took: " ~ total.peek().msecs.to!string ~ " ms");
 
-	GC.stats(&stats);
-	writeln(stats.samplingSamples, " samples");
-	writeln(stats.samplingPopulation, " population");
-	writeln(stats.totalSamplingFailures, " total sampling failures");
-	writeln(stats.totalSamplings, " total samplings");
-	writeln(stats.elapsedInSampling.msecs, " ms in sampling");
+	GC.stats(stats);
+	//writeln(stats.samplingSamples, " samples");
+	//writeln(stats.samplingPopulation, " population");
+	//writeln(stats.totalSamplingFailures, " total sampling failures");
+	//writeln(stats.totalSamplings, " total samplings");
+	//writeln(stats.elapsedInSampling.msecs, " ms in sampling");
+	writeln(stats.bytesUsedCurrently, "B in use");
+	writeln(stats.bytesFreeCurrently, "B immediately available");
+	writeln(stats.totalCollections, " collections");
 	writeln(stats.bytesFreedInCollections, " freed");
 	writeln(stats.bytesUsedInCollections, " used"); 
 	writeln(stats.elapsedInCollections.msecs, " ms in collections"); 
 	writeln(stats.elapsedInBigAllocations.msecs, " ms in big allocations"); 
 	writeln(stats.elapsedInSmallAllocations.msecs, " ms in small allocations");
-	writeln(stats.elapsedInFreeToOS.usecs, " us in minimize");
-	writeln(stats.elapsed.msecs, " ms GC lived");
+	writeln(stats.elapsed.msecs, " ms elapsed since GC start");
 	writeln(stats.bytesFreedToOS, "B Freed to OS");
 	writeln(stats.totalFreeToOS, " total Freed to OS");  
-	writeln(stats.totalCollections, " collections");
-
+	writeln(stats.maxBytesUsed, "B Used at Highest Point");
+	writeln(stats.maxBytesFree, "B Free at Highest Point");
 	writeln((stats.bytesFreedInCollections.to!float/stats.bytesUsedInCollections.to!float)*100f, " avg freed % per collection");
 }
 
